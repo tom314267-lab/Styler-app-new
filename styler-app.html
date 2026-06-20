@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Styler</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#FDF6F0;--card:#FFFFFF;--rose:#D4748C;--rose-dark:#B85A72;
+  --purple:#9B7FC4;--ink:#3A2D35;--muted:#8C7E86;--line:#EDD8E0;
+  --soft:#F7E1E8;--lav:#E8DCF5;--sage:#D6E8D8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);max-width:430px;margin:0 auto;min-height:100vh;color:var(--ink);overflow-x:hidden}
+button,input,textarea,select{font-family:'DM Sans',sans-serif}
+button{cursor:pointer}
+input,textarea,select{outline:none}
+button:active{opacity:.85}
+
+/* ── Utility ── */
+.hidden{display:none!important}
+.small{font-size:12px;color:var(--muted);line-height:1.5}
+.label{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px}
+.title{font-family:'DM Serif Display',serif;color:var(--ink)}
+
+/* ── Buttons ── */
+.primary-btn{border:none;border-radius:14px;padding:13px 16px;font-size:14px;font-weight:700;background:linear-gradient(135deg,var(--rose),var(--purple));color:white;box-shadow:0 4px 16px rgba(180,90,114,.25)}
+.secondary-btn{border:none;border-radius:14px;padding:13px 16px;font-size:14px;font-weight:700;background:var(--soft);color:var(--rose-dark)}
+.ghost-btn{border:1px solid var(--line);border-radius:14px;padding:13px 16px;font-size:14px;font-weight:700;background:white;color:var(--ink)}
+
+/* ── Card / Tag / Chip ── */
+.card{background:white;border:1px solid var(--line);border-radius:22px;padding:16px;box-shadow:0 2px 12px rgba(80,50,60,.04)}
+.tag{display:inline-flex;align-items:center;padding:4px 9px;border-radius:999px;background:var(--lav);color:var(--rose-dark);font-size:11px;font-weight:800}
+.chip{border:1px solid var(--line);background:white;color:var(--ink);border-radius:999px;padding:8px 14px;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer}
+.chip.active{background:var(--rose);border-color:var(--rose);color:white}
+
+/* ── Fields ── */
+.field{width:100%;background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:13px;color:var(--ink)}
+textarea.field{min-height:78px;resize:vertical}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ── Scroll row ── */
+.scroll-row{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.scroll-row::-webkit-scrollbar{display:none}
+.scroll-inner{display:flex;gap:8px;width:max-content;padding-bottom:2px}
+
+/* ══════════════════════════════
+   ONBOARDING
+══════════════════════════════ */
+#onboarding{
+  min-height:100vh;
+  background:linear-gradient(160deg,#F7E1E8 0%,#FDF6F0 55%,#E8DCF5 100%);
+  display:flex;flex-direction:column;justify-content:center;
+  padding:30px 22px;
+}
+.brand-title{
+  font-family:'DM Serif Display',serif;text-align:center;
+  color:var(--rose-dark);font-size:44px;margin-bottom:22px;letter-spacing:-1px;
+}
+.onboard-card{
+  background:rgba(255,255,255,.92);backdrop-filter:blur(12px);
+  border:1px solid var(--line);border-radius:28px;padding:24px;
+  box-shadow:0 10px 40px rgba(180,100,120,.14);
+}
+
+/* Plan cards — fully visible, no clipping */
+.plan{
+  display:block;width:100%;
+  border:1.5px solid var(--line);background:#fff;
+  border-radius:18px;padding:16px;
+  margin-bottom:10px;position:relative;cursor:pointer;
+  transition:border-color .2s,box-shadow .2s;
+}
+.plan.selected{border:2px solid var(--rose);box-shadow:0 4px 20px rgba(184,90,114,.18)}
+.plan input{position:absolute;opacity:0;pointer-events:none}
+.plan-head{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:12px}
+.price{font-size:18px;font-weight:800;color:var(--rose-dark);white-space:nowrap}
+.check{
+  width:22px;height:22px;border-radius:50%;border:2px solid var(--line);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;color:transparent;flex-shrink:0;
+  transition:background .2s,border-color .2s,color .2s;
+}
+.plan.selected .check{background:var(--rose);border-color:var(--rose);color:white}
+
+/* ══════════════════════════════
+   APP SHELL
+══════════════════════════════ */
+#app{display:none;height:100vh;display:none;flex-direction:column}
+
+/* Top bar — fixed height, no overlap */
+.topbar{
+  flex-shrink:0;
+  position:sticky;top:0;z-index:30;
+  background:rgba(255,255,255,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:10px;
+  padding:0 16px;height:56px;
+}
+.home-btn{
+  width:34px;height:34px;flex-shrink:0;
+  border-radius:12px;border:1px solid var(--line);
+  background:white;color:var(--rose-dark);
+  display:flex;align-items:center;justify-content:center;
+}
+.topbar-title{
+  font-family:'DM Serif Display',serif;font-size:26px;
+  color:var(--rose-dark);flex:1;text-align:center;line-height:1;
+}
+.top-meta{
+  text-align:right;font-size:10.5px;color:var(--muted);
+  line-height:1.4;flex-shrink:0;max-width:150px;
+}
+
+/* ── Tab pages ── */
+.tab-content{display:none;flex:1;overflow-y:auto;padding:16px 16px 0;-webkit-overflow-scrolling:touch}
+.tab-content.active{display:block}
+
+/* Bottom nav — fixed, full-width within max-width container */
+.bottom-nav{
+  flex-shrink:0;
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:430px;
+  background:rgba(255,255,255,.98);backdrop-filter:blur(16px);
+  border-top:1px solid var(--line);
+  display:flex;align-items:stretch;
+  padding:6px 0 max(10px, env(safe-area-inset-bottom));
+  z-index:30;
+}
+.nav-btn{
+  flex:1;border:0;background:transparent;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;color:var(--muted);padding:4px 0;
+  transition:color .15s;
+}
+.nav-btn.active{color:var(--rose-dark)}
+.nav-dot{
+  width:36px;height:30px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+}
+.nav-btn.active .nav-dot{background:linear-gradient(135deg,var(--soft),var(--lav))}
+.nav-label{font-size:10px;font-weight:600;letter-spacing:.01em}
+/* Nav SVGs inherit color via CSS currentColor */
+.nav-btn svg{
+  display:block;
+  width:19px;height:19px;
+  fill:none;stroke:currentColor;
+  stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;
+}
+
+/* Space so content doesn't hide behind fixed nav */
+.tab-content{padding-bottom:80px}
+
+/* ══════════════════════════════
+   OUTFIT / CHAT TAB
+══════════════════════════════ */
+.chat-area{display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
+
+.bubble-row{display:flex;gap:8px;align-items:flex-end}
+.bubble-row.user{justify-content:flex-end}
+
+.avatar{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--soft),var(--lav));
+  display:flex;align-items:center;justify-content:center;
+  color:var(--rose-dark);font-size:11px;font-weight:800;
+}
+.bubble{
+  max-width:76%;border-radius:18px;
+  padding:11px 14px;font-size:14px;line-height:1.52;
+  word-break:break-word;
+}
+.bubble.ai{
+  background:white;border:1px solid var(--line);
+  border-radius:4px 18px 18px 18px;
+  box-shadow:0 1px 8px rgba(0,0,0,.05);
+}
+.bubble.user{
+  background:linear-gradient(135deg,var(--rose-dark),var(--purple));
+  color:white;border-radius:18px 18px 4px 18px;
+}
+
+/* Quick prompts row */
+.quick-row{
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
+  margin:0 -16px;padding:0 16px 10px;
+}
+.quick-row::-webkit-scrollbar{display:none}
+.quick-inner{display:flex;gap:8px;width:max-content}
+
+/* Chat input — sits ABOVE the fixed nav (82px) */
+.chat-input-wrap{
+  position:sticky;bottom:80px;
+  background:linear-gradient(to top,var(--bg) 80%,transparent);
+  padding:8px 0 4px;
+}
+.chat-input-row{display:flex;gap:8px;align-items:flex-end}
+.chat-input-row textarea{
+  flex:1;border:1px solid var(--line);border-radius:18px;
+  padding:11px 14px;background:white;resize:none;
+  font-size:13px;line-height:1.4;color:var(--ink);
+  box-shadow:0 1px 6px rgba(0,0,0,.04);
+}
+.send-btn{
+  width:42px;height:42px;flex-shrink:0;border-radius:50%;border:0;
+  background:linear-gradient(135deg,var(--rose),var(--purple));
+  color:white;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 3px 12px rgba(180,90,114,.3);
+}
+.send-btn svg{width:16px;height:16px;fill:none;stroke:white;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── Outfit results ── */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-title{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink)}
+.outfits-scroll{overflow-x:auto;margin:0 -16px 14px;padding:0 16px;-webkit-overflow-scrolling:touch}
+.outfits-scroll::-webkit-scrollbar{display:none}
+.outfits-row{display:flex;gap:11px;width:max-content}
+.outfit-card{
+  min-width:174px;padding:13px;cursor:pointer;
+  background:white;border:1px solid var(--line);border-radius:18px;
+}
+.outfit-card.selected{border:2px solid var(--rose);box-shadow:0 2px 12px rgba(184,90,114,.15)}
+.outfit-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:9px}
+.outfit-cell{
+  height:56px;border-radius:10px;border:1px solid rgba(0,0,0,.05);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;text-align:center;padding:4px;
+}
+
+/* ── Shop / browse grid ── */
+.shop-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.shop-card{background:white;border:1px solid var(--line);border-radius:18px;overflow:hidden;position:relative}
+.shop-card img{width:100%;height:148px;object-fit:cover;background:var(--soft);display:block}
+.shop-body{padding:11px}
+.match-badge{position:absolute;top:8px;right:8px;background:var(--rose-dark);color:white;border-radius:999px;padding:3px 8px;font-size:10px;font-weight:800}
+.product-link{display:block;text-align:center;text-decoration:none;border-radius:10px;padding:8px;font-size:12px;font-weight:800;margin-top:6px;background:var(--rose);color:white}
+.map-link{display:block;text-align:center;text-decoration:none;border-radius:10px;padding:8px;font-size:12px;font-weight:800;margin-top:4px;background:white;border:1px solid var(--line);color:var(--purple)}
+
+/* ── Closet ── */
+.closet-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.closet-item{background:white;border:1px solid var(--line);border-radius:18px;padding:12px;overflow:hidden}
+.closet-swatch{height:72px;border-radius:13px;margin-bottom:9px;border:1px solid rgba(0,0,0,.05);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:rgba(58,45,53,.65)}
+
+/* ── Inspo ── */
+/* Fixed: empty state spans full width, not split across columns */
+.inspo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.inspo-item{border:1px solid var(--line);border-radius:16px;background:white;overflow:hidden;position:relative}
+.inspo-item img{width:100%;display:block}
+.inspo-empty{grid-column:1/-1} /* spans both columns */
+
+/* ── Empty state ── */
+.empty{border:1px dashed var(--line);background:rgba(255,255,255,.7);border-radius:20px;padding:24px;text-align:center}
+
+/* ── Notices ── */
+.notice{border:1px solid var(--line);background:#fff;border-radius:16px;padding:12px;font-size:12px;color:var(--muted);line-height:1.55}
+.notice.success{background:#F4FBF5;border-color:#C8E6CC;color:#3D6B43}
+.notice.danger{background:#FFF5F4;border-color:#F2D1CC;color:#8A514A}
+
+/* ── Modals ── */
+.modal{position:fixed;inset:0;background:rgba(58,45,53,.5);display:none;align-items:flex-end;z-index:100}
+.modal.open{display:flex}
+.sheet{
+  width:100%;background:white;border-radius:24px 24px 0 0;
+  padding:20px 18px max(28px, env(safe-area-inset-bottom));
+}
+.handle{width:40px;height:4px;border-radius:4px;background:var(--line);margin:0 auto 18px}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ ONBOARDING ═══════════════════════ -->
+<section id="onboarding">
+  <div class="brand-title">Styler</div>
+  <div class="onboard-card">
+
+    <div id="choose-plan-step">
+      <h1 class="title" style="font-size:25px;margin-bottom:6px">Choose how to start</h1>
+      <p class="small" style="margin-bottom:18px">Explore the product or subscribe to create a real style profile and digital closet.</p>
+
+      <label class="plan selected" data-plan="premium" onclick="selectPlan('premium')">
+        <input type="radio" name="plan" value="premium" checked />
+        <div class="plan-head">
+          <div>
+            <div style="font-weight:800;margin-bottom:3px">Styler Premium</div>
+            <div class="small">Full account, AI outfits, closet, weather and product suggestions.</div>
+          </div>
+          <div class="price">8€/mo</div>
+          <div class="check">✓</div>
+        </div>
+      </label>
+
+      <label class="plan" data-plan="demo" onclick="selectPlan('demo')">
+        <input type="radio" name="plan" value="demo" />
+        <div class="plan-head">
+          <div>
+            <div style="font-weight:800;margin-bottom:3px">Free demo</div>
+            <div class="small">Just explore the features. This does not log you into a real account.</div>
+          </div>
+          <div class="price">0€</div>
+          <div class="check">✓</div>
+        </div>
+      </label>
+
+      <button type="button" class="primary-btn" style="width:100%" onclick="continueFromPlan()">Continue</button>
+    </div>
+
+    <form id="payment-step" class="hidden" onsubmit="finishPayment(event)">
+      <h1 class="title" style="font-size:25px;margin-bottom:6px">Set up your subscription</h1>
+      <p class="small" style="margin-bottom:16px">7 days free, then 8€/month. Cancel anytime before the trial ends and you won't be charged.</p>
+      <div class="card" style="margin-bottom:14px;padding:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-weight:800;font-size:14px">Styler Premium</div>
+            <div class="small">Billed monthly after trial</div>
+          </div>
+          <div class="price">8€/mo</div>
+        </div>
+      </div>
+      <div class="label">Cardholder name</div>
+      <input class="field" id="pay-name" placeholder="Name on card" required style="margin-bottom:10px"/>
+      <div class="label">Card number</div>
+      <input class="field" id="pay-card" placeholder="1234 1234 1234 1234" inputmode="numeric" maxlength="19" required style="margin-bottom:10px" oninput="formatCardNumber(this)"/>
+      <div class="field-row" style="margin-bottom:10px">
+        <div><div class="label">Expiry</div><input class="field" id="pay-exp" placeholder="MM/YY" inputmode="numeric" maxlength="5" required oninput="formatExpiry(this)"/></div>
+        <div><div class="label">CVC</div><input class="field" id="pay-cvc" placeholder="123" inputmode="numeric" maxlength="4" required/></div>
+      </div>
+      <div class="label">Billing postcode</div>
+      <input class="field" id="pay-zip" placeholder="e.g. 1000-001" required style="margin-bottom:6px"/>
+      <p id="pay-error" class="small" style="color:#A33A3A;display:none;margin-bottom:6px"></p>
+      <div class="notice" style="margin:10px 0">🔒 Payments are encrypted and processed securely. You won't be charged until your free trial ends.</div>
+      <div style="display:flex;gap:10px;margin-top:6px">
+        <button type="button" class="ghost-btn" onclick="backToPlansFromPayment()">Back</button>
+        <button type="submit" class="primary-btn" style="flex:1">Start free trial</button>
+      </div>
+    </form>
+
+    <form id="profile-step" class="hidden" onsubmit="finishProfile(event)">
+      <h1 class="title" style="font-size:25px;margin-bottom:6px">Create your style profile</h1>
+      <p class="small" style="margin-bottom:16px">Fields marked <strong>required</strong> help us size and fit outfits correctly. Everything else is optional — skip anything you're not comfortable sharing.</p>
+
+      <div class="label" style="margin-top:4px">Required</div>
+      <div class="field-row" style="margin-bottom:4px">
+        <div><div class="label">Name *</div><input class="field" id="p-name" placeholder="Your name" value="Sofia" required/></div>
+        <div><div class="label">Age *</div><input class="field" id="p-age" type="number" min="13" max="120" placeholder="Age" required/></div>
+        <div><div class="label">Clothing size *</div><input class="field" id="p-size" placeholder="e.g. S / EU 36" required/></div>
+        <div><div class="label">Body shape *</div><select class="field" id="p-body" required>
+          <option value="">Select…</option>
+          <option>Hourglass</option><option>Pear</option><option>Apple</option><option>Rectangle</option><option>Inverted triangle</option><option>Prefer not to say</option>
+        </select></div>
+      </div>
+      <p id="profile-required-error" class="small" style="color:#A33A3A;display:none;margin:6px 0 4px"></p>
+
+      <div class="label" style="margin-top:16px">Optional — helps personalize further</div>
+      <div class="field-row">
+        <div><div class="label">Height</div><input class="field" id="p-height" placeholder="e.g. 165 cm" /></div>
+        <div><div class="label">Undertone</div><select class="field" id="p-undertone"><option value="">Prefer not to say</option><option>Warm</option><option>Cool</option><option>Neutral</option><option>Olive</option></select></div>
+        <div><div class="label">Skin tone</div><input class="field" id="p-skin" placeholder="e.g. light olive" /></div>
+        <div><div class="label">Eye color</div><input class="field" id="p-eyes" placeholder="e.g. hazel" /></div>
+        <div><div class="label">Hair color</div><input class="field" id="p-hair" placeholder="e.g. brunette" /></div>
+        <div><div class="label">Hair pattern</div><input class="field" id="p-hair-pattern" placeholder="straight, wavy, curly..." /></div>
+        <div><div class="label">Favorite colors</div><input class="field" id="p-fav-colors" placeholder="cream, navy, red..." /></div>
+        <div><div class="label">Colors to avoid</div><input class="field" id="p-avoid-colors" placeholder="neon, orange..." /></div>
+        <div><div class="label">Budget range</div><input class="field" id="p-budget" placeholder="e.g. 20–80€" /></div>
+        <div><div class="label">Favorite brands</div><input class="field" id="p-brands" placeholder="Zara, Mango..." /></div>
+      </div>
+      <div style="margin-top:12px"><div class="label">Preferred styles</div><textarea class="field" id="p-styles" placeholder="Minimal, romantic, streetwear, classic, workwear..."></textarea></div>
+      <div style="margin-top:12px"><div class="label">Lifestyle, weather sensitivity, dress codes</div><textarea class="field" id="p-lifestyle" placeholder="Tell Styler about your day-to-day life and preferences."></textarea></div>
+      <div style="margin-top:12px"><div class="label">Anything else?</div><textarea class="field" id="p-extra" placeholder="Add anything you want the AI to consider."></textarea></div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button type="button" class="ghost-btn" onclick="backToPlans()">Back</button>
+        <button type="submit" class="primary-btn" style="flex:1">Enter Styler</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<!-- ═══════════════════════ APP ═══════════════════════ -->
+<main id="app" style="display:none;height:100vh;display:none;flex-direction:column">
+  <header class="topbar">
+    <button class="home-btn" onclick="goHome()" title="Home">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
+        <path d="M9 21V12h6v9"/>
+      </svg>
+    </button>
+    <div class="topbar-title">Styler</div>
+    <div class="top-meta" id="top-meta">Location not set<br/>Weather not loaded</div>
+  </header>
+
+  <!-- OUTFIT TAB -->
+  <section class="tab-content active" id="tab-outfit">
+    <div id="mode-banner" class="notice" style="margin-bottom:12px"></div>
+    <div id="chat" class="chat-area"></div>
+
+    <!-- sticky input above nav -->
+    <div class="chat-input-wrap">
+      <div class="quick-row" style="margin-bottom:8px">
+        <div class="quick-inner" id="quick-prompts"></div>
+      </div>
+      <div class="chat-input-row">
+        <textarea id="chat-input" rows="1" placeholder="Ask for an outfit or request adjustments..."></textarea>
+        <button class="send-btn" onclick="sendMessage()">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2" fill="white" stroke="white"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div id="outfit-results" class="hidden" style="padding-bottom:4px">
+      <div class="section-header"><h2 class="section-title">Outfit suggestions</h2><span class="small">Swipe →</span></div>
+      <div class="outfits-scroll"><div class="outfits-row" id="outfits-row"></div></div>
+      <div class="card" id="outfit-detail" style="margin-bottom:14px"></div>
+      <div class="section-header">
+        <h2 class="section-title">Explore more</h2>
+        <button class="chip" onclick="loadVerifiedProducts()">Refresh</button>
+      </div>
+      <div id="explore-note" class="notice" style="margin-bottom:10px"></div>
+      <div class="shop-grid" id="explore-grid"></div>
+    </div>
+  </section>
+
+  <!-- CLOSET TAB -->
+  <section class="tab-content" id="tab-closet">
+    <div class="section-header">
+      <h2 class="section-title">Digital closet</h2>
+      <button class="chip active" onclick="openAddItem()">+ Add item</button>
+    </div>
+    <div id="closet-status" class="notice" style="margin-bottom:12px"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span class="label" style="margin:0">Organize by</span>
+      <select class="field" id="closet-organize" style="width:auto;padding:7px 10px;font-size:12px" onchange="setOrganizeMode(this.value)">
+        <option value="category">Category</option>
+        <option value="season">Season</option>
+        <option value="occasion">Occasion</option>
+      </select>
+    </div>
+    <div class="scroll-row" style="margin-bottom:12px"><div class="scroll-inner" id="closet-filters"></div></div>
+    <div class="closet-grid" id="closet-grid"></div>
+    <div class="card" id="closet-tip" style="margin-top:14px;display:none"></div>
+  </section>
+
+  <!-- INSPO TAB -->
+  <section class="tab-content" id="tab-inspo">
+    <div class="section-header">
+      <h2 class="section-title">Inspo</h2>
+      <button class="chip active" onclick="openInspoModal()">+ Add</button>
+    </div>
+    <p class="small" style="margin-bottom:14px">Upload images, screenshots, or import a Pinterest board.</p>
+    <div class="card" style="margin-bottom:14px">
+      <div class="label">Pinterest board</div>
+      <input class="field" id="pinterest-url" placeholder="Paste Pinterest board URL" style="margin-bottom:10px"/>
+      <button class="secondary-btn" style="width:100%" id="pinterest-import-btn" onclick="importPinterestBoard()">Import board</button>
+      <p id="pinterest-status" class="small" style="margin-top:8px;display:none"></p>
+    </div>
+    <!-- inspo-grid with inspo-empty for full-width empty state -->
+    <div class="inspo-grid" id="inspo-grid"></div>
+  </section>
+
+  <!-- BROWSE TAB -->
+  <section class="tab-content" id="tab-browse">
+    <div class="section-header">
+      <h2 class="section-title">Browse</h2>
+      <button class="chip" onclick="requestLocation()">📍 Location</button>
+    </div>
+    <input class="field" id="browse-search" placeholder="Search products..." oninput="renderBrowse()" style="margin-bottom:10px"/>
+    <div class="scroll-row" style="margin-bottom:10px"><div class="scroll-inner" id="brand-filters"></div></div>
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span class="label" style="margin:0">Max price</span>
+        <span id="price-label" style="font-size:12px;font-weight:800;color:var(--rose-dark)">100€</span>
+      </div>
+      <input id="price-range" type="range" min="0" max="300" value="100" step="5" style="width:100%;accent-color:var(--rose)" oninput="setMaxPrice(this.value)"/>
+    </div>
+    <div id="browse-note" class="notice" style="margin-bottom:10px"></div>
+    <div class="shop-grid" id="browse-grid"></div>
+  </section>
+
+  <!-- ACCOUNT TAB -->
+  <section class="tab-content" id="tab-account">
+    <div class="card" style="text-align:center;margin-bottom:14px">
+      <div class="avatar" id="account-avatar" style="width:60px;height:60px;margin:0 auto 10px;font-size:20px;background:linear-gradient(135deg,var(--soft),var(--lav));border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--rose-dark);font-weight:800">S</div>
+      <h2 class="title" style="font-size:22px;margin-bottom:6px" id="account-name">Demo user</h2>
+      <span class="tag" id="account-plan">Free demo</span>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <h3 style="font-size:15px;font-weight:700;margin-bottom:10px">Style profile</h3>
+      <div id="profile-summary"></div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <h3 style="font-size:15px;font-weight:700;margin-bottom:8px">Subscription</h3>
+      <div id="subscription-box"></div>
+    </div>
+  </section>
+
+  <nav class="bottom-nav" id="bottom-nav"></nav>
+</main>
+
+<!-- ── Add item modal ── -->
+<div class="modal" id="add-item-modal" onclick="closeModal('add-item-modal')">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="handle"></div>
+
+    <div id="add-item-menu">
+      <h2 class="title" style="font-size:22px;margin-bottom:14px">Add closet item</h2>
+      <div id="add-item-options"></div>
+    </div>
+
+    <!-- Photo upload sub-flow -->
+    <div id="add-item-photo" class="hidden">
+      <h2 class="title" style="font-size:20px;margin-bottom:10px">Add by photo</h2>
+      <input type="file" id="photo-file-input" accept="image/*" capture="environment" class="field" style="margin-bottom:10px" onchange="previewItemPhoto(this)"/>
+      <div id="photo-preview" style="display:none;margin-bottom:10px">
+        <img id="photo-preview-img" style="width:100%;border-radius:14px;border:1px solid var(--line);max-height:220px;object-fit:cover" />
+        <p class="small" style="margin-top:6px">Background removed and edges straightened automatically.</p>
+      </div>
+      <div class="field-row" style="margin-bottom:10px">
+        <div><div class="label">Item name</div><input class="field" id="photo-name" placeholder="e.g. White linen shirt"/></div>
+        <div><div class="label">Brand (optional)</div><input class="field" id="photo-brand" placeholder="If known"/></div>
+        <div><div class="label">Category</div><select class="field" id="photo-category">
+          <option>Tops</option><option>Bottoms</option><option>Dresses</option><option>Outerwear</option><option>Shoes</option><option>Accessories</option>
+        </select></div>
+        <div><div class="label">Season</div><select class="field" id="photo-season">
+          <option>All year</option><option>Spring/Summer</option><option>Autumn/Winter</option>
+        </select></div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="ghost-btn" onclick="backToAddMenu()">Back</button>
+        <button class="primary-btn" style="flex:1" onclick="savePhotoItem()">Add to closet</button>
+      </div>
+    </div>
+
+    <!-- Link sub-flow -->
+    <div id="add-item-link" class="hidden">
+      <h2 class="title" style="font-size:20px;margin-bottom:10px">Add from a product link</h2>
+      <div class="label">Product page URL</div>
+      <input class="field" id="link-url" placeholder="https://www.zara.com/..." style="margin-bottom:10px"/>
+      <button class="secondary-btn" style="width:100%;margin-bottom:10px" onclick="fetchLinkPreview()">Fetch product info</button>
+      <div id="link-preview" class="hidden" style="margin-bottom:10px">
+        <div class="card" style="display:flex;gap:10px;align-items:center">
+          <div id="link-preview-swatch" style="width:52px;height:52px;border-radius:10px;flex-shrink:0;background:var(--soft)"></div>
+          <div>
+            <div id="link-preview-name" style="font-weight:800;font-size:13px"></div>
+            <div id="link-preview-brand" class="small"></div>
+          </div>
+        </div>
+      </div>
+      <div class="field-row" style="margin-bottom:10px">
+        <div><div class="label">Category</div><select class="field" id="link-category">
+          <option>Tops</option><option>Bottoms</option><option>Dresses</option><option>Outerwear</option><option>Shoes</option><option>Accessories</option>
+        </select></div>
+        <div><div class="label">Season</div><select class="field" id="link-season">
+          <option>All year</option><option>Spring/Summer</option><option>Autumn/Winter</option>
+        </select></div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="ghost-btn" onclick="backToAddMenu()">Back</button>
+        <button class="primary-btn" style="flex:1" onclick="saveLinkItem()">Add to closet</button>
+      </div>
+    </div>
+
+    <!-- Describe manually sub-flow -->
+    <div id="add-item-describe" class="hidden">
+      <h2 class="title" style="font-size:20px;margin-bottom:10px">Describe the item</h2>
+      <div class="field-row" style="margin-bottom:10px">
+        <div><div class="label">Item name</div><input class="field" id="desc-name" placeholder="e.g. Floral midi dress" required/></div>
+        <div><div class="label">Brand</div><input class="field" id="desc-brand" placeholder="e.g. H&M"/></div>
+        <div><div class="label">Category</div><select class="field" id="desc-category">
+          <option>Tops</option><option>Bottoms</option><option>Dresses</option><option>Outerwear</option><option>Shoes</option><option>Accessories</option>
+        </select></div>
+        <div><div class="label">Color</div><input class="field" id="desc-color" placeholder="e.g. dusty rose" oninput="updateColorSwatch(this.value)"/></div>
+        <div><div class="label">Material</div><input class="field" id="desc-material" placeholder="e.g. cotton, linen"/></div>
+        <div><div class="label">Season</div><select class="field" id="desc-season">
+          <option>All year</option><option>Spring/Summer</option><option>Autumn/Winter</option>
+        </select></div>
+      </div>
+      <div class="label">Occasion</div>
+      <select class="field" id="desc-occasion" style="margin-bottom:10px">
+        <option>Everyday/Casual</option><option>Work/Formal</option><option>Evening/Going out</option><option>Active/Sport</option><option>Loungewear</option>
+      </select>
+      <div class="label">Notes (optional)</div>
+      <textarea class="field" id="desc-notes" placeholder="Fit, condition, anything else useful" style="margin-bottom:10px"></textarea>
+      <div style="display:flex;gap:10px">
+        <button class="ghost-btn" onclick="backToAddMenu()">Back</button>
+        <button class="primary-btn" style="flex:1" onclick="saveDescribedItem()">Add to closet</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Inspo modal ── -->
+<div class="modal" id="inspo-modal" onclick="closeModal('inspo-modal')">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="handle"></div>
+    <h2 class="title" style="font-size:22px;margin-bottom:14px">Add inspiration</h2>
+    <input type="file" id="inspo-file-input" accept="image/*" multiple class="field" style="margin-bottom:10px" onchange="handleInspoUpload(this)"/>
+    <textarea class="field" id="inspo-note" placeholder="Describe what you like about these images"></textarea>
+    <button class="primary-btn" style="width:100%;margin-top:12px" onclick="saveInspoNote()">Save inspiration</button>
+  </div>
+</div>
+
+<script>
+// ── SVG icons for nav (inline, color via CSS currentColor) ──
+const NAV_ICONS = {
+  outfit: `<svg viewBox="0 0 24 24"><path d="M20.38 3.46 16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.57a1 1 0 00.99.84H6v10c0 .55.45 1 1 1h10c.55 0 1-.45 1-1V10h2.15a1 1 0 00.99-.84l.58-3.57a2 2 0 00-1.34-2.23z"/></svg>`,
+  closet: `<svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="17" rx="2"/><line x1="12" y1="4" x2="12" y2="21"/><circle cx="9" cy="10" r="1.2"/><circle cx="15" cy="10" r="1.2"/></svg>`,
+  inspo:  `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>`,
+  browse: `<svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>`,
+  account:`<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M5 20c0-3.87 3.13-7 7-7s7 3.13 7 7"/></svg>`
+};
+
+const TABS = [
+  {id:'outfit', label:'Outfit'},
+  {id:'closet', label:'Closet'},
+  {id:'inspo',  label:'Inspo'},
+  {id:'browse', label:'Browse'},
+  {id:'account',label:'You'}
+];
+
+const state = {
+  selectedPlan:'premium', mode:null, currentTab:'outfit',
+  userLocation:null, weather:null, season:getSeason(), timezone:null,
+  maxPrice:100, brandFilter:'all', closetFilter:'all', organizeMode:'category',
+  profile:{}, payment:null, wishlist:[], selectedOutfit:0, chatStarted:false,
+  outfitSuggestions:[], inspoImages:[]
+};
+
+const DEMO_CLOSET = [
+  {id:'d1',demo:true,name:'Cream linen shirt',brand:'Demo closet',category:'Tops',color:'#F5F0E8',type:'shirt',season:'Spring/Summer',occasion:'Everyday/Casual'},
+  {id:'d2',demo:true,name:'Straight-leg jeans',brand:'Demo closet',category:'Bottoms',color:'#6B8CAE',type:'jeans',season:'All year',occasion:'Everyday/Casual'},
+  {id:'d3',demo:true,name:'Beige blazer',brand:'Demo closet',category:'Outerwear',color:'#C8B89A',type:'blazer',season:'All year',occasion:'Work/Formal'},
+  {id:'d4',demo:true,name:'Black leather flats',brand:'Demo closet',category:'Shoes',color:'#252027',type:'shoes',season:'All year',occasion:'Work/Formal'},
+  {id:'d5',demo:true,name:'Lavender satin skirt',brand:'Demo closet',category:'Bottoms',color:'#BCA6C9',type:'skirt',season:'Spring/Summer',occasion:'Evening/Going out'},
+  {id:'d6',demo:true,name:'Dusty rose cardigan',brand:'Demo closet',category:'Outerwear',color:'#E7C7D2',type:'cardigan',season:'Autumn/Winter',occasion:'Everyday/Casual'}
+];
+
+let realCloset = [];
+const verifiedProductCatalog = [
+  {verified:true, name:'Poplin midi dress', brand:'Zara', price:35.95, currency:'€',
+   image:'https://static.zara.net/photos///2024/I/0/1/p/2614/141/712/2/w/750/2614141712_6_1_1.jpg',
+   url:'https://www.zara.com/pt/en/poplin-midi-dress-p02614141.html',
+   storeName:'Zara Colombo, Lisboa', mapsUrl:'https://www.google.com/maps/search/?api=1&query=Zara+Centro+Colombo+Lisboa'},
+  {verified:true, name:'Ribbed knit cardigan', brand:'H&M', price:24.99, currency:'€',
+   image:'https://lp2.hm.com/hmgoepprod?set=quality%5B79%5D%2Csource%5B%2Fbb%2Fbf%2Fbbbf2c4ef1bb9a6c3a17e5f97ea93f8e2cabf2d2.jpg%5D%2Corigin%5Bdam%5D%2Ccategory%5B%5D%2Ctype%5BDESCRIPTIVESTILLLIFE%5D%2Cres%5Bm%5D%2Chmver%5B2%5D&call=url[file:/product/main]',
+   url:'https://www2.hm.com/en_eu/productpage.html',
+   storeName:'H&M Colombo, Lisboa', mapsUrl:'https://www.google.com/maps/search/?api=1&query=H%26M+Centro+Colombo+Lisboa'},
+  {verified:true, name:'Flowy wide-leg trousers', brand:'Mango', price:39.99, currency:'€',
+   image:'https://shop.mango.com/assets/rcs/pics/static/T8/fotos/S/87055680_99.jpg?imwidth=2160&imdensity=1',
+   url:'https://shop.mango.com/pt/en',
+   storeName:'Mango Amoreiras, Lisboa', mapsUrl:'https://www.google.com/maps/search/?api=1&query=Mango+Amoreiras+Lisboa'},
+  {verified:true, name:'Linen-blend co-ord set', brand:'Bershka', price:49.90, currency:'€',
+   image:'https://static.bershka.net/4/photos2/2024/I/0/1/p/3473/000/250/3473000250_6_1_1.jpg',
+   url:'https://www.bershka.com/pt/en/',
+   storeName:'Bershka Vasco da Gama, Lisboa', mapsUrl:'https://www.google.com/maps/search/?api=1&query=Bershka+Vasco+da+Gama+Lisboa'},
+  {verified:true, name:'Satin slip skirt', brand:'Pull&Bear', price:25.99, currency:'€',
+   image:'https://static.pullandbear.net/2/photos2/2024/I/0/1/p/9355/302/250/9355302250_6_1_1.jpg',
+   url:'https://www.pullandbear.com/pt/en/',
+   storeName:'Pull&Bear Colombo, Lisboa', mapsUrl:'https://www.google.com/maps/search/?api=1&query=Pull%26Bear+Centro+Colombo+Lisboa'},
+  {verified:true, name:'Merino wool jumper', brand:'COS', price:79, currency:'€',
+   image:'https://lp2.hm.com/hmgoepprod?set=quality%5B79%5D%2Csource%5B%2F22%2F0c%2F220ce3c79f5d3c61e62dbb3897d6e8ca25e9ea99.jpg%5D%2Corigin%5Bdam%5D%2Ccategory%5B%5D%2Ctype%5BDESCRIPTIVESTILLLIFE%5D%2Cres%5Bm%5D%2Chmver%5B1%5D&call=url[file:/product/main]',
+   url:'https://www.cos.com/en_eur',
+   storeName:'COS Chiado, Lisboa', mapsUrl:'https://www.google.com/maps/search/?api=1&query=COS+Chiado+Lisboa'},
+  {verified:true, name:'Tailored blazer', brand:'Massimo Dutti', price:99, currency:'€',
+   image:'https://static.massimodutti.net/3/photos2/2024/I/0/1/p/5044/703/250/5044703250_2_1_1.jpg',
+   url:'https://www.massimodutti.com/pt/en/',
+   storeName:'Massimo Dutti Chiado, Lisboa', mapsUrl:'https://www.google.com/maps/search/?api=1&query=Massimo+Dutti+Chiado+Lisboa'},
+  {verified:true, name:'High-waist straight jeans', brand:'Zara', price:29.95, currency:'€',
+   image:'https://static.zara.net/photos///2024/I/0/1/p/5535/356/427/2/w/750/5535356427_6_1_1.jpg',
+   url:'https://www.zara.com/pt/en/high-waist-straight-jeans-p05535356.html',
+   storeName:'Zara Colombo, Lisboa', mapsUrl:'https://www.google.com/maps/search/?api=1&query=Zara+Centro+Colombo+Lisboa'}
+];
+
+const quickPrompts = ['Outfit for today','Dinner outfit','Work outfit','Rainy day','Make it warmer','Change shoes','More formal','More colorful'];
+const brands = ['all','Zara','H&M','Mango','Bershka','Pull&Bear','COS','Massimo Dutti'];
+
+/* ── Onboarding ── */
+function selectPlan(plan) {
+  state.selectedPlan = plan;
+  document.querySelectorAll('.plan').forEach(p => {
+    const sel = p.dataset.plan === plan;
+    p.classList.toggle('selected', sel);
+    const r = p.querySelector('input[type="radio"]');
+    if (r) r.checked = sel;
+  });
+}
+function continueFromPlan() {
+  if (state.selectedPlan === 'demo') launchApp('demo');
+  else goToPaymentStep();
+}
+function goToPaymentStep() {
+  document.getElementById('choose-plan-step').classList.add('hidden');
+  document.getElementById('payment-step').classList.remove('hidden');
+}
+function backToPlansFromPayment() {
+  document.getElementById('payment-step').classList.add('hidden');
+  document.getElementById('choose-plan-step').classList.remove('hidden');
+}
+function formatCardNumber(el) {
+  let digits = el.value.replace(/\D/g,'').slice(0,16);
+  el.value = digits.replace(/(.{4})/g,'$1 ').trim();
+}
+function formatExpiry(el) {
+  let digits = el.value.replace(/\D/g,'').slice(0,4);
+  el.value = digits.length > 2 ? digits.slice(0,2)+'/'+digits.slice(2) : digits;
+}
+function finishPayment(e) {
+  e.preventDefault();
+  const errEl = document.getElementById('pay-error');
+  errEl.style.display = 'none';
+  const name = val('pay-name');
+  const cardDigits = val('pay-card').replace(/\s/g,'');
+  const exp = val('pay-exp');
+  const cvc = val('pay-cvc');
+  const zip = val('pay-zip');
+
+  if (!name) return showPayError('Enter the name on your card.');
+  if (cardDigits.length < 15 || cardDigits.length > 16 || !/^\d+$/.test(cardDigits)) return showPayError('Enter a valid card number.');
+  if (!/^\d{2}\/\d{2}$/.test(exp)) return showPayError('Enter expiry as MM/YY.');
+  const [mm, yy] = exp.split('/').map(Number);
+  if (mm < 1 || mm > 12) return showPayError('Enter a valid expiry month.');
+  if (cvc.length < 3 || !/^\d+$/.test(cvc)) return showPayError('Enter a valid CVC.');
+  if (!zip) return showPayError('Enter your billing postcode.');
+
+  state.payment = {
+    name, last4: cardDigits.slice(-4), brand: detectCardBrand(cardDigits), exp, zip
+  };
+  document.getElementById('payment-step').classList.add('hidden');
+  document.getElementById('profile-step').classList.remove('hidden');
+}
+function showPayError(msg) {
+  const errEl = document.getElementById('pay-error');
+  errEl.textContent = msg;
+  errEl.style.display = 'block';
+}
+function detectCardBrand(digits) {
+  if (/^4/.test(digits)) return 'Visa';
+  if (/^5[1-5]/.test(digits)) return 'Mastercard';
+  if (/^3[47]/.test(digits)) return 'Amex';
+  return 'Card';
+}
+function backToPlans() {
+  document.getElementById('profile-step').classList.add('hidden');
+  document.getElementById('payment-step').classList.remove('hidden');
+}
+function finishProfile(e) {
+  e.preventDefault();
+  const errEl = document.getElementById('profile-required-error');
+  errEl.style.display = 'none';
+
+  const name = val('p-name');
+  const age = val('p-age');
+  const size = val('p-size');
+  const body = document.getElementById('p-body').value;
+
+  if (!name) return showProfileError('Please enter your name.');
+  if (!age || Number(age) < 13) return showProfileError('Please enter a valid age (13+).');
+  if (!size) return showProfileError('Please enter your clothing size — needed to recommend items that fit.');
+  if (!body) return showProfileError('Please select a body shape, or choose "Prefer not to say".');
+
+  state.profile = {
+    name, age, height:val('p-height'),
+    size, body, undertone:document.getElementById('p-undertone').value,
+    skin:val('p-skin'), eyes:val('p-eyes'), hair:val('p-hair'),
+    hairPattern:val('p-hair-pattern'), favoriteColors:val('p-fav-colors'),
+    avoidColors:val('p-avoid-colors'), budget:val('p-budget'),
+    brands:val('p-brands'), styles:val('p-styles'),
+    lifestyle:val('p-lifestyle'), extra:val('p-extra')
+  };
+  launchApp('paid');
+}
+function showProfileError(msg) {
+  const errEl = document.getElementById('profile-required-error');
+  errEl.textContent = msg;
+  errEl.style.display = 'block';
+  errEl.scrollIntoView({block:'center', behavior:'smooth'});
+}
+function launchApp(mode) {
+  state.mode = mode;
+  document.getElementById('onboarding').style.display = 'none';
+  const app = document.getElementById('app');
+  app.style.display = 'flex';
+  app.style.flexDirection = 'column';
+  app.style.height = '100vh';
+  initApp();
+}
+function goHome() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('onboarding').style.display = 'flex';
+  state.chatStarted = false;
+  document.getElementById('chat').innerHTML = '';
+}
+
+/* ── App init ── */
+function initApp() {
+  renderNav();
+  renderModeBanner();
+  renderQuickPrompts();
+  renderClosetFilters();
+  renderCloset();
+  renderBrandFilters();
+  loadVerifiedProducts();
+  renderAccount();
+  renderAddItemOptions();
+  renderInspo();
+  requestLocation(false);
+  addAIMessage(state.mode === 'demo'
+    ? 'Welcome to the demo! Explore sample outfits and see how Styler works.'
+    : 'Tell me what you\'re dressing for, and I\'ll build outfit options from your closet.');
+  document.getElementById('chat-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+}
+
+function renderModeBanner() {
+  const b = document.getElementById('mode-banner');
+  b.className = 'notice ' + (state.mode === 'demo' ? '' : 'success');
+  b.textContent = state.mode === 'demo'
+    ? 'Free demo mode — sample data only. No real account is created.'
+    : 'Subscribed account — your real closet starts empty until you add items.';
+}
+
+/* ── Nav ── */
+function renderNav() {
+  document.getElementById('bottom-nav').innerHTML = TABS.map(t => `
+    <button class="nav-btn${state.currentTab===t.id?' active':''}" onclick="switchTab('${t.id}')">
+      <div class="nav-dot">${NAV_ICONS[t.id]}</div>
+      <div class="nav-label">${t.label}</div>
+    </button>`).join('');
+}
+function switchTab(id) {
+  state.currentTab = id;
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  renderNav();
+}
+
+/* ── Chat / outfit ── */
+function renderQuickPrompts() {
+  document.getElementById('quick-prompts').innerHTML =
+    quickPrompts.map(p => `<button class="chip" onclick="setInput('${esc(p)}')">${p}</button>`).join('');
+}
+function setInput(text) {
+  document.getElementById('chat-input').value = text;
+  document.getElementById('chat-input').focus();
+}
+function addAIMessage(text) {
+  const chat = document.getElementById('chat');
+  const row = document.createElement('div');
+  row.className = 'bubble-row ai';
+  row.innerHTML = `<div class="avatar">S</div><div class="bubble ai">${text}</div>`;
+  chat.appendChild(row);
+  row.scrollIntoView({block:'nearest', behavior:'smooth'});
+}
+function addUserMessage(text) {
+  const chat = document.getElementById('chat');
+  const row = document.createElement('div');
+  row.className = 'bubble-row user';
+  row.innerHTML = `<div class="bubble user">${esc(text)}</div>`;
+  chat.appendChild(row);
+  row.scrollIntoView({block:'nearest', behavior:'smooth'});
+}
+function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  addUserMessage(text);
+  input.value = '';
+  const closet = getCloset();
+  if (state.mode === 'paid' && closet.length === 0) {
+    addAIMessage('Your closet is empty. Add a few items first, then I can build outfit suggestions from your real wardrobe.');
+    switchTab('closet');
+    return;
+  }
+  if (!state.chatStarted || state.outfitSuggestions.length === 0) {
+    state.outfitSuggestions = buildOutfitsFromCloset(text, closet);
+    state.chatStarted = true;
+    addAIMessage(buildNaturalReply(text));
+  } else {
+    state.outfitSuggestions = adjustOutfits(text, state.outfitSuggestions, closet);
+    addAIMessage('Updated the suggestions based on your request. Keep refining if you\'d like!');
+  }
+  renderOutfits();
+  loadVerifiedProducts();
+}
+function buildNaturalReply(text) {
+  const loc = state.userLocation?.city ? ` in ${state.userLocation.city}` : '';
+  const weather = state.weather?.summary ? ` considering it's ${state.weather.summary.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,'').trim()}${state.weather.temp!==null?` (${state.weather.temp}°C)`:''}` : '';
+  const col = state.mode==='paid' && state.profile.favoriteColors ? ` I kept your preferred colours (${state.profile.favoriteColors}) in mind.` : '';
+  return `Here are outfit options from your ${state.mode==='demo'?'demo':'digital'} closet${loc}${weather}.${col}`;
+}
+function getCloset() { return state.mode === 'demo' ? DEMO_CLOSET : realCloset; }
+function buildOutfitsFromCloset(prompt, closet) {
+  const tops    = closet.filter(i => i.category === 'Tops');
+  const bottoms = closet.filter(i => i.category === 'Bottoms');
+  const outer   = closet.filter(i => i.category === 'Outerwear');
+  const shoes   = closet.filter(i => i.category === 'Shoes');
+  const acc     = closet.filter(i => i.category === 'Accessories');
+  return ['Clean profile look','Soft balanced outfit','Practical day outfit'].map((name, idx) => ({
+    id: 'o'+idx, name,
+    reason: reasonFor(prompt, idx),
+    items: [tops[idx%Math.max(tops.length,1)], bottoms[idx%Math.max(bottoms.length,1)], outer[idx%Math.max(outer.length,1)], shoes[idx%Math.max(shoes.length,1)], acc[idx%Math.max(acc.length,1)]].filter(Boolean)
+  })).filter(o => o.items.length > 0);
+}
+function reasonFor(prompt, idx) {
+  const p = prompt.toLowerCase();
+  if (p.includes('rain')) return 'Practical for wet weather. Add water-resistant outerwear if available.';
+  if (p.includes('formal')||p.includes('work')) return 'Polished and structured using what\'s in your closet.';
+  if (p.includes('night')||p.includes('dinner')) return 'Elevated without overcomplicating things.';
+  return idx===0 ? 'Simple and wearable for this occasion.' : idx===1 ? 'Alternative silhouette from your closet.' : 'Comfort-focused option.';
+}
+function adjustOutfits(text, outfits, closet) {
+  const t = text.toLowerCase();
+  return outfits.map(o => {
+    let items = [...o.items]; let reason = o.reason;
+    if (t.includes('shoe')) {
+      const alt = closet.filter(i => i.category==='Shoes' && !items.some(x=>x.id===i.id));
+      if (alt[0]) { items = items.filter(i=>i.category!=='Shoes').concat(alt[0]); reason='Swapped shoes while keeping the outfit balanced.'; }
+    }
+    if (t.includes('warm')) {
+      const ow = closet.filter(i=>i.category==='Outerwear');
+      if (ow[0] && !items.some(i=>i.category==='Outerwear')) { items.push(ow[0]); reason='Added warmth via outerwear.'; }
+    }
+    if (t.includes('formal')) reason = 'Adjusted toward a cleaner, more structured look.';
+    if (t.includes('color'))  reason = 'More colour contrast from available items.';
+    return {...o, reason, items};
+  });
+}
+function renderOutfits() {
+  document.getElementById('outfit-results').classList.remove('hidden');
+  document.getElementById('outfits-row').innerHTML = state.outfitSuggestions.map((o,i) =>
+    `<div class="outfit-card${i===state.selectedOutfit?' selected':''}" onclick="selectOutfit(${i})">
+      <div class="outfit-grid">${o.items.slice(0,4).map(item=>`<div class="outfit-cell" style="background:${item.color}55">${esc(item.type||item.category)}</div>`).join('')}</div>
+      <div style="font-weight:800;font-size:13px;margin-bottom:2px">${esc(o.name)}</div>
+      <div class="small">${o.items.length} pieces</div>
+    </div>`).join('');
+  renderOutfitDetail();
+}
+function selectOutfit(i) { state.selectedOutfit=i; renderOutfits(); }
+function renderOutfitDetail() {
+  const o = state.outfitSuggestions[state.selectedOutfit];
+  if (!o) return;
+  document.getElementById('outfit-detail').innerHTML =
+    `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+       <h3 style="font-size:15px;font-weight:700">${esc(o.name)}</h3>
+       <span class="tag">From closet</span>
+     </div>
+     <p class="small" style="margin-bottom:10px">${esc(o.reason)}</p>
+     ${o.items.map(i=>`<div style="display:flex;justify-content:space-between;border-top:1px solid var(--line);padding:9px 0">
+       <span style="font-size:13px;font-weight:700">${esc(i.name)}</span>
+       <span class="small">${esc(i.brand)}</span>
+     </div>`).join('')}`;
+}
+
+/* ── Products ── */
+function loadVerifiedProducts() { renderExplore(); renderBrowse(); }
+function validateProduct(p) { return p && p.verified===true && p.name && p.brand && Number.isFinite(p.price) && p.currency && p.image && p.url && p.storeName && p.mapsUrl; }
+function filteredProducts() {
+  const q = (document.getElementById('browse-search')?.value||'').toLowerCase();
+  return verifiedProductCatalog.filter(validateProduct).filter(p=>p.price<=state.maxPrice).filter(p=>state.brandFilter==='all'||p.brand===state.brandFilter).filter(p=>!q||`${p.name} ${p.brand} ${p.storeName}`.toLowerCase().includes(q));
+}
+function renderExplore() {
+  const items = filteredProducts();
+  document.getElementById('explore-note').textContent = items.length
+    ? `Showing items near ${state.userLocation?.city || 'your area'} that match your style.`
+    : 'No items match your current filters. Try a different brand or raise your price limit.';
+  document.getElementById('explore-grid').innerHTML = items.slice(0,4).map(productCard).join('');
+}
+function renderBrowse() {
+  const items = filteredProducts();
+  document.getElementById('browse-note').textContent = items.length
+    ? `${items.length} verified item${items.length===1?'':'s'} from real brand catalogs.`
+    : 'No items match your search or filters. Try clearing them.';
+  document.getElementById('browse-grid').innerHTML = items.map(productCard).join('');
+}
+function productCard(p) {
+  return `<div class="shop-card">
+    <div style="position:relative"><img src="${esc(p.image)}" alt="${esc(p.name)}" onerror="this.onerror=null;this.src='https://placehold.co/300x370/F7E1E8/B85A72?text=${encodeURIComponent(p.brand)}'"><div class="match-badge">Verified</div></div>
+    <div class="shop-body">
+      <div style="font-size:13px;font-weight:800;margin-bottom:2px">${esc(p.name)}</div>
+      <div class="small">${esc(p.brand)}</div>
+      <div style="font-size:15px;font-weight:800;color:var(--rose-dark);margin-top:6px">${p.price}${p.currency}</div>
+      <a class="product-link" href="${esc(p.url)}" target="_blank" rel="noopener">View item</a>
+      <a class="map-link" href="${esc(p.mapsUrl)}" target="_blank" rel="noopener">📍 ${esc(p.storeName)}</a>
+      <button class="ghost-btn" style="width:100%;margin-top:4px;padding:8px;font-size:11px" onclick="addToWishlist('${esc(p.name)}')">♡ Save to wishlist</button>
+    </div>
+  </div>`;
+}
+function addToWishlist(name) {
+  if (!state.wishlist) state.wishlist = [];
+  if (!state.wishlist.includes(name)) state.wishlist.push(name);
+  alert(`Saved "${name}" to your wishlist.`);
+}
+
+/* ── Closet ── */
+const ORGANIZE_GROUPS = {
+  category: ['Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'],
+  season: ['Spring/Summer','Autumn/Winter','All year'],
+  occasion: ['Everyday/Casual','Work/Formal','Evening/Going out','Active/Sport','Loungewear']
+};
+function groupKey(item) {
+  if (state.organizeMode === 'season') return item.season || 'All year';
+  if (state.organizeMode === 'occasion') return item.occasion || 'Everyday/Casual';
+  return item.category || 'Tops';
+}
+function setOrganizeMode(mode) {
+  state.organizeMode = mode;
+  state.closetFilter = 'all';
+  renderClosetFilters();
+  renderCloset();
+}
+function renderClosetFilters() {
+  const groups = ['all', ...ORGANIZE_GROUPS[state.organizeMode]];
+  document.getElementById('closet-filters').innerHTML = groups.map(c =>
+    `<button class="chip${state.closetFilter===c?' active':''}" onclick="setClosetFilter('${esc(c)}')">${c==='all'?'All':c}</button>`).join('');
+}
+function setClosetFilter(c) { state.closetFilter=c; renderClosetFilters(); renderCloset(); }
+function renderCloset() {
+  const closet = getCloset();
+  const items = closet.filter(i => state.closetFilter==='all' || groupKey(i)===state.closetFilter);
+  document.getElementById('closet-status').textContent = state.mode==='demo'
+    ? 'Demo closet — these are sample items only. Subscribe to build your real closet.'
+    : closet.length ? `Your real closet — ${closet.length} item${closet.length===1?'':'s'} saved.` : 'Your real closet — empty until you add items.';
+  document.getElementById('closet-grid').innerHTML = items.length
+    ? items.map(i=>`<div class="closet-item">
+        ${i.image ? `<img src="${esc(i.image)}" alt="${esc(i.name)}" style="width:100%;height:72px;object-fit:cover;border-radius:13px;margin-bottom:9px"/>`
+                   : `<div class="closet-swatch" style="background:${i.color}55">${esc(i.type||i.category)}</div>`}
+        <div style="font-size:13px;font-weight:800;margin-bottom:2px">${esc(i.name)}</div>
+        <div class="small">${esc(i.brand||'Unbranded')}${i.demo?' · demo':''}</div>
+        <div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap">
+          <span class="tag" style="font-size:9px">${esc(i.category)}</span>
+          ${i.season?`<span class="tag" style="font-size:9px;background:var(--sage);color:#3D6B43">${esc(i.season)}</span>`:''}
+        </div>
+      </div>`).join('')
+    : `<div class="empty" style="grid-column:1/-1">
+        <h3 style="font-size:15px;margin-bottom:6px">No closet items yet</h3>
+        <p class="small">Add clothing by photo, camera, link, or description.</p>
+      </div>`;
+  renderClosetTip(closet);
+}
+function renderClosetTip(closet) {
+  const tip = document.getElementById('closet-tip');
+  if (!closet.length) { tip.style.display='none'; return; }
+  const groups = ORGANIZE_GROUPS[state.organizeMode];
+  const counts = groups.map(g => ({g, n: closet.filter(i=>groupKey(i)===g).length})).filter(x=>x.n>0);
+  const modeLabel = state.organizeMode==='category'?'category':state.organizeMode==='season'?'season':'occasion';
+  tip.style.display = 'block';
+  tip.innerHTML = `<h3 style="font-size:13px;font-weight:800;margin-bottom:8px">Physical closet tip</h3>
+    <p class="small" style="margin-bottom:8px">Arrange your hangers and shelves by ${modeLabel}, left to right, in this order so it matches what you see here:</p>
+    ${counts.map(c=>`<div style="display:flex;justify-content:space-between;border-top:1px solid var(--line);padding:7px 0">
+      <span style="font-size:12px;font-weight:700">${esc(c.g)}</span><span class="small">${c.n} item${c.n===1?'':'s'}</span>
+    </div>`).join('')}`;
+}
+
+/* ── Inspo ── */
+const SAMPLE_INSPO_SETS = [
+  ['https://images.unsplash.com/photo-1483985988355-763728e1935b?w=400&q=80','https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80','https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=400&q=80','https://images.unsplash.com/photo-1571513722275-4b41940f54b8?w=400&q=80'],
+  ['https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&q=80','https://images.unsplash.com/photo-1492707892479-7bc8d5a4ee93?w=400&q=80','https://images.unsplash.com/photo-1485968579580-b6d095142e6e?w=400&q=80','https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=400&q=80']
+];
+function importPinterestBoard() {
+  const url = val('pinterest-url');
+  const statusEl = document.getElementById('pinterest-status');
+  const btn = document.getElementById('pinterest-import-btn');
+  if (!url) { statusEl.style.display='block'; statusEl.style.color='#A33A3A'; statusEl.textContent='Paste a Pinterest board link first.'; return; }
+  if (!/pinterest\.[a-z.]+\//i.test(url)) { statusEl.style.display='block'; statusEl.style.color='#A33A3A'; statusEl.textContent="That doesn't look like a Pinterest URL. Example: pinterest.com/username/board-name"; return; }
+  btn.disabled = true; btn.textContent = 'Importing…';
+  statusEl.style.display='block'; statusEl.style.color='var(--muted)'; statusEl.textContent='Connecting to Pinterest and pulling pins from this board…';
+  setTimeout(() => {
+    const set = SAMPLE_INSPO_SETS[state.inspoImages.length % SAMPLE_INSPO_SETS.length];
+    state.inspoImages = state.inspoImages.concat(set.map(src => ({src, source:'pinterest'})));
+    renderInspo();
+    btn.disabled = false; btn.textContent = 'Import board';
+    statusEl.style.color = '#3D6B43';
+    statusEl.textContent = `Imported ${set.length} pins from this board. Styler is learning your style from them.`;
+    document.getElementById('pinterest-url').value = '';
+  }, 1200);
+}
+function handleInspoUpload(input) {
+  const files = Array.from(input.files || []);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      state.inspoImages.push({src: e.target.result, source:'upload'});
+      renderInspo();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function renderInspo() {
+  const grid = document.getElementById('inspo-grid');
+  if (state.inspoImages.length) {
+    grid.innerHTML = state.inspoImages.map(img=>`<div class="inspo-item"><img src="${esc(img.src)}" alt="Style inspiration">${img.source==='pinterest'?'<span class="tag" style="position:absolute;margin:8px;font-size:9px">Pinterest</span>':''}</div>`).join('');
+  } else {
+    // full-width empty state using inspo-empty class
+    grid.innerHTML = `<div class="inspo-empty">
+      <div class="empty">
+        <h3 style="font-size:15px;margin-bottom:6px">No inspo yet</h3>
+        <p class="small">Tap "+ Add" to upload images or import a Pinterest board.</p>
+      </div>
+    </div>`;
+  }
+}
+
+/* ── Browse ── */
+function renderBrandFilters() {
+  document.getElementById('brand-filters').innerHTML = brands.map(b =>
+    `<button class="chip${state.brandFilter===b?' active':''}" onclick="setBrand('${b}')">${b==='all'?'All brands':b}</button>`).join('');
+}
+function setBrand(b) { state.brandFilter=b; renderBrandFilters(); renderBrowse(); renderExplore(); }
+function setMaxPrice(v) { state.maxPrice=Number(v); document.getElementById('price-label').textContent=`${v}€`; renderBrowse(); renderExplore(); }
+
+/* ── Account ── */
+function renderAccount() {
+  const paid = state.mode === 'paid';
+  const name = paid ? (state.profile.name||'Styler user') : 'Demo user';
+  document.getElementById('account-name').textContent = name;
+  document.getElementById('account-avatar').textContent = name.slice(0,1).toUpperCase();
+  document.getElementById('account-plan').textContent = paid ? 'Premium subscription' : 'Free demo';
+  const rows = paid ? state.profile : {mode:'Free demo', note:'No real account. Sample data only.'};
+  document.getElementById('profile-summary').innerHTML = Object.entries(rows).filter(([,v])=>v)
+    .map(([k,v])=>`<div style="display:flex;justify-content:space-between;gap:10px;border-top:1px solid var(--line);padding:9px 0">
+      <span class="small">${labelize(k)}</span>
+      <span style="font-size:12px;font-weight:800;text-align:right;max-width:55%">${esc(String(v))}</span>
+    </div>`).join('');
+  document.getElementById('subscription-box').innerHTML = paid
+    ? `<p class="small">Styler Premium · 8€/month</p>
+       <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);margin-top:10px;padding-top:10px">
+         <span class="small">${state.payment ? esc(state.payment.brand)+' •••• '+esc(state.payment.last4) : 'No card on file'}</span>
+         <span class="small">${state.payment ? 'Exp '+esc(state.payment.exp) : ''}</span>
+       </div>
+       <p class="small" style="margin-top:6px">Trial active — first charge on day 8.</p>
+       <button class="secondary-btn" style="width:100%;margin-top:10px" onclick="openEditPayment()">Edit payment method</button>
+       <button class="ghost-btn" style="width:100%;margin-top:8px" onclick="cancelSubscription()">Cancel subscription</button>`
+    : `<p class="small" style="margin-bottom:10px">Demo only. Subscribe to save a real profile and closet.</p><button class="primary-btn" style="width:100%" onclick="goHome();selectPlan('premium')">Subscribe now</button>`;
+}
+function openEditPayment() {
+  goHome();
+  selectPlan('premium');
+  goToPaymentStep();
+}
+function cancelSubscription() {
+  if (confirm('Cancel your Styler Premium subscription? You will keep access until the end of your trial/billing period.')) {
+    alert('Subscription cancelled. You will not be charged again.');
+  }
+}
+
+/* ── Add item modal ── */
+function renderAddItemOptions() {
+  const opts = [
+    ['📷', 'Take a photo / upload', 'AI straightens it, removes the background, and detects what it is.', 'photo'],
+    ['🔗', 'Paste a product link', "I'll pull the item name, brand, and image from the page.", 'link'],
+    ['✏️', 'Describe it', 'Add category, color, fabric, fit, and occasion yourself.', 'describe']
+  ];
+  document.getElementById('add-item-options').innerHTML = opts.map(o =>
+    `<button class="ghost-btn" style="width:100%;text-align:left;margin-bottom:8px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start" onclick="openAddSubflow('${o[3]}')">
+      <span style="font-size:20px">${o[0]}</span>
+      <span>
+        <strong style="display:block;margin-bottom:3px">${o[1]}</strong>
+        <span class="small">${o[2]}</span>
+      </span>
+    </button>`).join('');
+}
+function openAddSubflow(flow) {
+  if (state.mode === 'demo') {
+    alert("Demo mode doesn't save real closet items. Subscribe to build your real closet.");
+    return;
+  }
+  document.getElementById('add-item-menu').classList.add('hidden');
+  document.getElementById('add-item-photo').classList.add('hidden');
+  document.getElementById('add-item-link').classList.add('hidden');
+  document.getElementById('add-item-describe').classList.add('hidden');
+  document.getElementById('add-item-' + flow).classList.remove('hidden');
+}
+function backToAddMenu() {
+  ['photo','link','describe'].forEach(f => document.getElementById('add-item-' + f).classList.add('hidden'));
+  document.getElementById('add-item-menu').classList.remove('hidden');
+  document.getElementById('photo-preview').style.display = 'none';
+  document.getElementById('link-preview').classList.add('hidden');
+  ['photo-file-input','photo-name','photo-brand','link-url','desc-name','desc-brand','desc-color','desc-material','desc-notes'].forEach(id=>{
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+}
+function previewItemPhoto(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('photo-preview-img').src = e.target.result;
+    document.getElementById('photo-preview').style.display = 'block';
+    document.getElementById('photo-preview').dataset.src = e.target.result;
+    if (!val('photo-name')) document.getElementById('photo-name').placeholder = 'Detecting item…';
+    setTimeout(() => {
+      if (!val('photo-name')) document.getElementById('photo-name').placeholder = 'e.g. White linen shirt';
+    }, 900);
+  };
+  reader.readAsDataURL(file);
+}
+function savePhotoItem() {
+  const name = val('photo-name');
+  if (!name) { alert('Give this item a name so it\'s easy to find.'); return; }
+  const img = document.getElementById('photo-preview').dataset.src || '';
+  realCloset.push({
+    id: 'r'+Date.now(), name, brand: val('photo-brand') || 'Unbranded',
+    category: document.getElementById('photo-category').value,
+    season: document.getElementById('photo-season').value,
+    occasion: 'Everyday/Casual', color: '#F2C4CE', image: img
+  });
+  closeModal('add-item-modal');
+  backToAddMenu();
+  renderCloset();
+}
+function fetchLinkPreview() {
+  const url = val('link-url');
+  if (!url || !/^https?:\/\//i.test(url)) { alert('Paste a full product URL, starting with https://'); return; }
+  let brand = 'Unknown brand';
+  const hostMatch = url.match(/https?:\/\/(?:www\.)?([^./]+)\./i);
+  if (hostMatch) brand = hostMatch[1].replace(/-/g,' ').replace(/\b\w/g, c=>c.toUpperCase());
+  document.getElementById('link-preview-name').textContent = 'Item from linked page';
+  document.getElementById('link-preview-brand').textContent = brand;
+  document.getElementById('link-preview').classList.remove('hidden');
+  document.getElementById('link-preview').dataset.brand = brand;
+  document.getElementById('link-preview').dataset.url = url;
+}
+function saveLinkItem() {
+  const preview = document.getElementById('link-preview');
+  if (preview.classList.contains('hidden')) { alert('Fetch the product info first.'); return; }
+  realCloset.push({
+    id: 'r'+Date.now(), name: document.getElementById('link-preview-name').textContent,
+    brand: preview.dataset.brand, category: document.getElementById('link-category').value,
+    season: document.getElementById('link-season').value, occasion: 'Everyday/Casual',
+    color: '#E8DCF5', url: preview.dataset.url
+  });
+  closeModal('add-item-modal');
+  backToAddMenu();
+  renderCloset();
+}
+function updateColorSwatch() {} 
+function saveDescribedItem() {
+  const name = val('desc-name');
+  if (!name) { alert('Give this item a name so it\'s easy to find.'); return; }
+  realCloset.push({
+    id: 'r'+Date.now(), name, brand: val('desc-brand') || 'Unbranded',
+    category: document.getElementById('desc-category').value,
+    color: '#D6E8D8', material: val('desc-material'),
+    season: document.getElementById('desc-season').value,
+    occasion: document.getElementById('desc-occasion').value,
+    notes: val('desc-notes')
+  });
+  closeModal('add-item-modal');
+  backToAddMenu();
+  renderCloset();
+}
+function openAddItem() {
+  backToAddMenu();
+  document.getElementById('add-item-modal').classList.add('open');
+}
+function openInspoModal() { document.getElementById('inspo-modal').classList.add('open'); }
+function saveInspoNote() {
+  const note = val('inspo-note');
+  if (note && state.inspoImages.length) {
+    state.inspoImages[state.inspoImages.length-1].note = note;
+  }
+  document.getElementById('inspo-note').value = '';
+  document.getElementById('inspo-file-input').value = '';
+  closeModal('inspo-modal');
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+/* ── Location / weather / time ── */
+const WEATHER_CODES = {
+  0:'Clear sky ☀️',1:'Mostly clear 🌤',2:'Partly cloudy ⛅',3:'Overcast ☁️',
+  45:'Foggy 🌫',48:'Foggy 🌫',51:'Light drizzle 🌦',53:'Drizzle 🌦',55:'Heavy drizzle 🌧',
+  61:'Light rain 🌧',63:'Rain 🌧',65:'Heavy rain 🌧',71:'Light snow 🌨',73:'Snow 🌨',75:'Heavy snow ❄️',
+  80:'Rain showers 🌦',81:'Rain showers 🌦',82:'Heavy showers ⛈',95:'Thunderstorm ⛈',96:'Thunderstorm ⛈',99:'Thunderstorm ⛈'
+};
+function requestLocation(showAlert=true) {
+  if (!navigator.geolocation) { manualLocation(); return; }
+  document.getElementById('top-meta').innerHTML = 'Locating you…';
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      state.userLocation = {lat:pos.coords.latitude, lng:pos.coords.longitude, city:null};
+      reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+      fetchWeather(pos.coords.latitude, pos.coords.longitude);
+    },
+    () => { if (showAlert) manualLocation(); else updateTopMeta(); },
+    {enableHighAccuracy:true, timeout:6000}
+  );
+}
+function manualLocation() {
+  const city = prompt('Location permission was not available. Enter your city:');
+  if (city) {
+    geocodeCity(city);
+  } else {
+    updateTopMeta();
+  }
+}
+async function reverseGeocode(lat, lng) {
+  try {
+    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lng}&language=en&count=1`);
+    const data = await res.json();
+    const place = data?.results?.[0];
+    state.userLocation.city = place ? `${place.name}${place.country_code ? ', '+place.country_code : ''}` : 'Current location';
+  } catch (e) {
+    state.userLocation.city = 'Current location';
+  }
+  updateTopMeta();
+}
+async function geocodeCity(city) {
+  document.getElementById('top-meta').innerHTML = 'Finding location…';
+  try {
+    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en`);
+    const data = await res.json();
+    const place = data?.results?.[0];
+    if (place) {
+      state.userLocation = {lat:place.latitude, lng:place.longitude, city:`${place.name}${place.country_code ? ', '+place.country_code : ''}`};
+      fetchWeather(place.latitude, place.longitude);
+    } else {
+      state.userLocation = {lat:null, lng:null, city};
+      updateTopMeta();
+    }
+  } catch (e) {
+    state.userLocation = {lat:null, lng:null, city};
+    updateTopMeta();
+  }
+}
+async function fetchWeather(lat, lng) {
+  try {
+    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,weather_code&timezone=auto`);
+    const data = await res.json();
+    const temp = data?.current?.temperature_2m;
+    const code = data?.current?.weather_code;
+    state.weather = {
+      summary: WEATHER_CODES[code] || 'Weather unavailable',
+      temp: temp !== undefined ? Math.round(temp) : null
+    };
+    if (data?.timezone) state.timezone = data.timezone;
+  } catch (e) {
+    state.weather = {summary:'Weather unavailable', temp:null};
+  }
+  updateTopMeta();
+}
+function updateTopMeta() {
+  const loc = state.userLocation?.city || 'Location not set';
+  const w = state.weather ? `${state.weather.summary}${state.weather.temp!==null?` · ${state.weather.temp}°C`:''}` : 'Weather not loaded';
+  const time = getLocalTimeString();
+  document.getElementById('top-meta').innerHTML = `${esc(loc)} · ${esc(time)}<br>${esc(w)}`;
+}
+function getLocalTimeString() {
+  try {
+    const opts = {hour:'2-digit', minute:'2-digit'};
+    if (state.timezone) opts.timeZone = state.timezone;
+    return new Date().toLocaleTimeString('en-GB', opts);
+  } catch (e) {
+    return new Date().toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+  }
+}
+setInterval(() => { if (state.mode) updateTopMeta(); }, 60000);
+
+/* ── Helpers ── */
+function getSeason() { const m=new Date().getMonth()+1; return m>=3&&m<=5?'spring':m>=6&&m<=8?'summer':m>=9&&m<=11?'autumn':'winter'; }
+function val(id) { return document.getElementById(id).value.trim(); }
+function esc(s) { return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+function labelize(k) { return k.replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase()); }
+</script>
+</body>
+</html>
